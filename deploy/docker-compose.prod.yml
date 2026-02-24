@@ -1,0 +1,136 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: realestate-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-log-bin
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  laravel-migrate:
+    build:
+      context: ..
+      dockerfile: deploy/docker/php/Dockerfile
+    container_name: realestate-laravel-migrate
+    env_file:
+      - ../.env.production
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_HOST: mysql
+      DB_PORT: 3306
+      RUN_OPTIMIZE: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: ["php", "artisan", "migrate", "--force"]
+    restart: "no"
+
+  laravel-app:
+    build:
+      context: ..
+      dockerfile: deploy/docker/php/Dockerfile
+    container_name: realestate-laravel-app
+    restart: unless-stopped
+    env_file:
+      - ../.env.production
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_HOST: mysql
+      DB_PORT: 3306
+      RUN_OPTIMIZE: "true"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      laravel-migrate:
+        condition: service_completed_successfully
+    expose:
+      - "9000"
+    volumes:
+      - laravel_storage:/var/www/html/storage
+
+  laravel-queue:
+    build:
+      context: ..
+      dockerfile: deploy/docker/php/Dockerfile
+    container_name: realestate-laravel-queue
+    restart: unless-stopped
+    env_file:
+      - ../.env.production
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_HOST: mysql
+      DB_PORT: 3306
+      RUN_OPTIMIZE: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      laravel-migrate:
+        condition: service_completed_successfully
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=90", "--max-time=3600"]
+    volumes:
+      - laravel_storage:/var/www/html/storage
+
+  laravel-nginx:
+    build:
+      context: ..
+      dockerfile: deploy/docker/nginx/laravel.Dockerfile
+    container_name: realestate-laravel-nginx
+    restart: unless-stopped
+    depends_on:
+      - laravel-app
+    expose:
+      - "80"
+    volumes:
+      - laravel_storage:/var/www/html/storage:ro
+
+  next-frontend:
+    build:
+      context: ..
+      dockerfile: deploy/docker/next/Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_LARAVEL_API_BASE_URL: ${NEXT_PUBLIC_LARAVEL_API_BASE_URL}
+    container_name: realestate-next
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      LARAVEL_API_BASE_URL: http://laravel-nginx
+      NEXT_PUBLIC_LARAVEL_API_BASE_URL: ${NEXT_PUBLIC_LARAVEL_API_BASE_URL}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+    depends_on:
+      - laravel-nginx
+    expose:
+      - "3000"
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: deploy/docker/nginx/gateway.Dockerfile
+    container_name: realestate-gateway
+    restart: unless-stopped
+    depends_on:
+      - next-frontend
+      - laravel-nginx
+    ports:
+      - "${APP_PORT:-80}:80"
+
+volumes:
+  mysql_data:
+  laravel_storage:

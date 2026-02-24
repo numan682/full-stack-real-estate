@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Http\Resources\Api\V1\Admin;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class AdminPropertyResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'uuid' => $this->uuid,
+            'title' => $this->title,
+            'slug' => $this->slug,
+            'description' => $this->description,
+            'property_type' => $this->property_type,
+            'listing_type' => $this->listing_type,
+            'status' => $this->status,
+            'bedrooms' => $this->bedrooms,
+            'bathrooms' => $this->bathrooms,
+            'area_sqft' => $this->area_sqft,
+            'price' => $this->price,
+            'address_line' => $this->address_line,
+            'city' => $this->city,
+            'state' => $this->state,
+            'postal_code' => $this->postal_code,
+            'country' => $this->country,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+            'features' => $this->features,
+            'is_featured' => (bool) $this->is_featured,
+            'published_at' => $this->published_at,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            'agency' => $this->whenLoaded('agency', fn () => [
+                'id' => $this->agency?->id,
+                'name' => $this->agency?->name,
+            ]),
+            'agent' => $this->whenLoaded('agent', fn () => [
+                'id' => $this->agent?->id,
+                'full_name' => $this->agent?->full_name,
+            ]),
+            'images' => $this->whenLoaded('images', fn () => $this->images->map(fn ($image) => [
+                'id' => $image->id,
+                'path' => $image->path,
+                'alt_text' => $image->alt_text,
+                'sort_order' => $image->sort_order,
+                'is_primary' => (bool) $image->is_primary,
+            ])->values()),
+            'primary_image' => $this->whenLoaded('primaryImage', fn () => [
+                'path' => $this->primaryImage?->path,
+                'alt_text' => $this->primaryImage?->alt_text,
+            ]),
+        ];
+    }
+}

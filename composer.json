@@ -1,0 +1,105 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "laravel/laravel",
+    "type": "project",
+    "description": "The skeleton application for the Laravel framework.",
+    "keywords": ["laravel", "framework"],
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^12.0",
+        "laravel/tinker": "^2.10.1"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.23",
+        "laravel/pail": "^1.2.2",
+        "laravel/pint": "^1.13",
+        "laravel/sail": "^1.41",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.6",
+        "phpunit/phpunit": "^11.5.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate --graceful --ansi"
+        ],
+        "prod:up": [
+            "@php scripts/prod.php up"
+        ],
+        "prod:down": [
+            "@php scripts/prod.php down"
+        ],
+        "prod:logs": [
+            "@php scripts/prod.php logs"
+        ],
+        "prod:status": [
+            "@php scripts/prod.php status"
+        ],
+        "dev:clean": [
+            "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-cleanup.ps1"
+        ],
+        "dev:api": [
+            "@php artisan serve --host=127.0.0.1 --port=8000 --no-reload"
+        ],
+        "dev:queue": [
+            "@php artisan queue:work --tries=1"
+        ],
+        "dev:frontend": [
+            "npm --prefix frontend run dev -- --hostname 127.0.0.1 --port 3000"
+        ],
+        "dev:frontend:start": [
+            "npm --prefix frontend run start -- --hostname 127.0.0.1 --port 3000"
+        ],
+        "demo:seed": [
+            "@php artisan db:seed --class=RealEstateSeeder --force"
+        ],
+        "dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-cleanup.ps1",
+            "npx concurrently --kill-others-on-fail -c \"#93c5fd,#c4b5fd,#fb7185\" \"php artisan serve --host=127.0.0.1 --port=8000 --no-reload\" \"php artisan queue:work --tries=1\" \"npm --prefix frontend run dev -- --hostname 127.0.0.1 --port 3000\" --names=api,queue,next"
+        ]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "12.x-dev"
+        },
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

@@ -1,0 +1,44 @@
+.theme-main-menu .logo {
+  width: 160px;
+  flex: 0 0 auto;
+}
+
+.theme-main-menu .logo img,
+.site-brand-logo {
+  display: block;
+  width: 100%;
+  max-height: 52px;
+  object-fit: contain;
+  object-position: left center;
+  height: auto;
+}
+
+.offcanvas.sidebar-nav .offcanvas-header .logo {
+  width: 150px;
+}
+
+.offcanvas.sidebar-nav .offcanvas-header .logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 991px) {
+  .theme-main-menu .logo {
+    width: 140px;
+  }
+
+  .theme-main-menu .logo img,
+  .site-brand-logo {
+    max-height: 46px;
+  }
+}
+
+.cms-template-static .main-page-wrapper > header.theme-main-menu,
+.cms-template-static .main-page-wrapper > .footer-one,
+.cms-template-static .main-page-wrapper > .footer-two,
+.cms-template-static .main-page-wrapper > .footer-three,
+.cms-template-static .main-page-wrapper > .footer-four,
+.cms-template-static .main-page-wrapper > .footer-five {
+  display: none !important;
+}
