@@ -16,7 +16,7 @@ class PropertySearchService
             ->published()
             ->with([
                 'agency:id,name,slug',
-                'agent:id,first_name,last_name,agency_id',
+                'agent:id,first_name,last_name,email,phone,avatar_path,position,is_active,agency_id',
                 'primaryImage:id,property_id,path,alt_text',
             ]);
 

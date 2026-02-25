@@ -43,6 +43,18 @@ function quotePowerShellArg(string $arg): string
     return "'".str_replace("'", "''", $arg)."'";
 }
 
+function toPowerShellArrayLiteral(array $values): string
+{
+    if ($values === []) {
+        return '@()';
+    }
+
+    return '@('.implode(', ', array_map(
+        static fn (string $value): string => quotePowerShellArg($value),
+        $values,
+    )).')';
+}
+
 function commandToString(array $command): string
 {
     if (! isWindows()) {
@@ -166,13 +178,14 @@ function toShellCommand(string $binary, array $args): string
 function startDetached(string $binary, array $args, string $cwd, string $stdoutLog, string $stderrLog): int
 {
     if (isWindows()) {
-        $inlineCommand = 'cd /d '.quoteWindowsArg($cwd)
+        $innerCommand = 'cd /d '.quoteWindowsArg($cwd)
             .' && '.toShellCommand($binary, $args)
-            .' 1>>'.quoteWindowsArg($stdoutLog)
-            .' 2>>'.quoteWindowsArg($stderrLog);
+            .' >> '.quoteWindowsArg($stdoutLog)
+            .' 2>> '.quoteWindowsArg($stderrLog);
+
         $powershellCommand = '$ErrorActionPreference = "Stop"; '
             .'$proc = Start-Process -FilePath "cmd.exe" '
-            .'-ArgumentList @("/d","/s","/c",'.quotePowerShellArg($inlineCommand).') '
+            .'-ArgumentList '.toPowerShellArrayLiteral(['/d', '/s', '/c', $innerCommand]).' '
             .'-WindowStyle Hidden -PassThru; '
             .'[Console]::Out.Write($proc.Id)';
         [$exitCode, $stdout, $stderr] = runProcess(['powershell', '-NoProfile', '-Command', $powershellCommand]);
@@ -235,11 +248,77 @@ function isPidRunning(int $pid): bool
     return $exitCode === 0;
 }
 
+function endpointMatchesPort(string $endpoint, int $port): bool
+{
+    if ($port < 1 || $port > 65535) {
+        return false;
+    }
+
+    return preg_match('/(?:^|[:.])'.preg_quote((string) $port, '/').'$/', trim($endpoint)) === 1;
+}
+
+function findListeningPid(int $port): int
+{
+    if ($port < 1 || $port > 65535) {
+        return 0;
+    }
+
+    if (isWindows()) {
+        [$exitCode, $stdout] = runProcess(['netstat', '-ano']);
+        if ($exitCode !== 0 || $stdout === '') {
+            return 0;
+        }
+
+        $lines = preg_split('/\R+/', $stdout) ?: [];
+        foreach ($lines as $line) {
+            $parts = preg_split('/\s+/', trim($line)) ?: [];
+            if (count($parts) < 5) {
+                continue;
+            }
+
+            $protocol = strtoupper($parts[0] ?? '');
+            $localAddress = $parts[1] ?? '';
+            $state = strtoupper($parts[3] ?? '');
+            $pid = (int) ($parts[4] ?? 0);
+
+            if ($protocol !== 'TCP' || $state !== 'LISTENING' || $pid < 1) {
+                continue;
+            }
+
+            if (endpointMatchesPort($localAddress, $port)) {
+                return $pid;
+            }
+        }
+
+        return 0;
+    }
+
+    [$exitCode, $stdout] = runProcess(['sh', '-lc', 'lsof -ti tcp:'.$port.' -sTCP:LISTEN 2>/dev/null | head -n 1']);
+    if ($exitCode === 0 && trim($stdout) !== '') {
+        return (int) trim($stdout);
+    }
+
+    return 0;
+}
+
+function resolveManagedPid(string $name, int $statePid, array $servicePorts): int
+{
+    $port = (int) ($servicePorts[$name] ?? 0);
+    if ($port > 0) {
+        $portPid = findListeningPid($port);
+        if ($portPid > 0) {
+            return $portPid;
+        }
+    }
+
+    return $statePid > 0 && isPidRunning($statePid) ? $statePid : 0;
+}
+
 $action = $argv[1] ?? '';
-$allowedActions = ['up', 'down', 'logs', 'status'];
+$allowedActions = ['up', 'down', 'restart', 'logs', 'status'];
 
 if (! in_array($action, $allowedActions, true)) {
-    fail('Usage: php scripts/prod.php [up|down|logs|status]');
+    fail('Usage: php scripts/prod.php [up|down|restart|logs|status]');
 }
 
 $projectRoot = realpath(__DIR__.'/..');
@@ -259,10 +338,37 @@ $runnerLogFile = $logsDir.'/prod-runner.log';
 ensureDirectory($runDir);
 ensureDirectory($logsDir);
 
-if ($action === 'up') {
+$portEnv = file_exists($envFile) ? parseEnvFile($envFile) : [];
+$servicePorts = [
+    'api' => (int) ($portEnv['API_PORT'] ?? 8000),
+    'next' => (int) ($portEnv['APP_PORT'] ?? 3000),
+];
+
+if (in_array($action, ['up', 'restart'], true)) {
     if (! file_exists($envFile)) {
         fail('Missing .env.production file. Create it from .env.production.example first.');
     }
+}
+
+if ($action === 'restart') {
+    if (file_exists($pidFile)) {
+        $processes = json_decode((string) file_get_contents($pidFile), true);
+
+        if (is_array($processes)) {
+            foreach ($processes as $name => $pid) {
+                $managedPid = resolveManagedPid((string) $name, (int) $pid, $servicePorts);
+                if ($managedPid > 0) {
+                    stopPid($managedPid);
+                    fwrite(STDOUT, "Stopped {$name} (PID {$managedPid}).\n");
+                }
+            }
+        }
+
+        unlink($pidFile);
+    }
+
+    fwrite(STDOUT, "Restarting production services...\n");
+    $action = 'up';
 }
 
 if ($action === 'down') {
@@ -279,9 +385,10 @@ if ($action === 'down') {
     }
 
     foreach ($processes as $name => $pid) {
-        if (is_int($pid) && $pid > 0) {
-            stopPid($pid);
-            fwrite(STDOUT, "Stopped {$name} (PID {$pid}).\n");
+        $managedPid = resolveManagedPid((string) $name, (int) $pid, $servicePorts);
+        if ($managedPid > 0) {
+            stopPid($managedPid);
+            fwrite(STDOUT, "Stopped {$name} (PID {$managedPid}).\n");
         }
     }
 
@@ -302,8 +409,17 @@ if ($action === 'status') {
     }
 
     foreach ($processes as $name => $pid) {
-        $running = is_int($pid) && isPidRunning($pid);
-        fwrite(STDOUT, sprintf("%s: %s%s", $name, $running ? 'running' : 'stopped', PHP_EOL));
+        $managedPid = resolveManagedPid((string) $name, (int) $pid, $servicePorts);
+        $running = $managedPid > 0;
+        fwrite(
+            STDOUT,
+            sprintf(
+                "%s: %s%s",
+                $name,
+                $running ? "running (PID {$managedPid})" : 'stopped',
+                PHP_EOL
+            )
+        );
     }
 
     exit(0);
@@ -366,9 +482,10 @@ if ($apiPort < 1 || $apiPort > 65535 || $frontendPort < 1 || $frontendPort > 655
 if (file_exists($pidFile)) {
     $existing = json_decode((string) file_get_contents($pidFile), true);
     if (is_array($existing)) {
-        foreach ($existing as $pid) {
-            if (is_int($pid) && $pid > 0) {
-                stopPid($pid);
+        foreach ($existing as $name => $pid) {
+            $managedPid = resolveManagedPid((string) $name, (int) $pid, $servicePorts);
+            if ($managedPid > 0) {
+                stopPid($managedPid);
             }
         }
     }
@@ -391,32 +508,66 @@ runOrFail(['npm', '--prefix', 'frontend', 'run', 'build'], $projectRoot);
 mark('prod up: artifacts ready', $runnerLogFile);
 
 fwrite(STDOUT, "Starting production services...\n");
-mark('prod up: start api', $runnerLogFile);
-$processes = [
-    'api' => startDetached(
-        'php',
-        ['artisan', 'serve', '--env=production', '--host=127.0.0.1', "--port={$apiPort}", '--no-reload'],
-        $projectRoot,
-        $logsDir.'/api.out.log',
-        $logsDir.'/api.err.log',
-    ),
-    'queue' => startDetached(
-        'php',
-        ['artisan', 'queue:work', '--env=production', '--sleep=3', '--tries=3', '--timeout=90', '--max-time=3600'],
-        $projectRoot,
-        $logsDir.'/queue.out.log',
-        $logsDir.'/queue.err.log',
-    ),
-    'next' => startDetached(
-        'npm',
-        ['run', 'start', '--', '--hostname', '127.0.0.1', '--port', (string) $frontendPort],
-        $frontendPath,
-        $logsDir.'/next.out.log',
-        $logsDir.'/next.err.log',
-    ),
-    // queue worker
-    // next server
+mark('prod up: start services', $runnerLogFile);
+
+$serviceDefinitions = [
+    'api' => [
+        'binary' => 'php',
+        'args' => ['artisan', 'serve', '--env=production', '--host=127.0.0.1', "--port={$apiPort}", '--no-reload'],
+        'cwd' => $projectRoot,
+        'out' => $logsDir.'/api.out.log',
+        'err' => $logsDir.'/api.err.log',
+        'port' => $apiPort,
+    ],
+    'queue' => [
+        'binary' => 'php',
+        'args' => ['artisan', 'queue:work', '--env=production', '--sleep=3', '--tries=3', '--timeout=90', '--max-time=3600'],
+        'cwd' => $projectRoot,
+        'out' => $logsDir.'/queue.out.log',
+        'err' => $logsDir.'/queue.err.log',
+        'port' => 0,
+    ],
+    'next' => [
+        'binary' => 'npm',
+        'args' => ['run', 'start', '--', '--hostname', '127.0.0.1', '--port', (string) $frontendPort],
+        'cwd' => $frontendPath,
+        'out' => $logsDir.'/next.out.log',
+        'err' => $logsDir.'/next.err.log',
+        'port' => $frontendPort,
+    ],
 ];
+
+$processes = [];
+foreach ($serviceDefinitions as $name => $service) {
+    $startedPid = startDetached(
+        $service['binary'],
+        $service['args'],
+        $service['cwd'],
+        $service['out'],
+        $service['err'],
+    );
+
+    $trackedPid = $startedPid;
+    $port = (int) ($service['port'] ?? 0);
+    if ($port > 0) {
+        $attempts = 30;
+        while ($attempts > 0) {
+            usleep(200000);
+            $portPid = findListeningPid($port);
+            if ($portPid > 0) {
+                $trackedPid = $portPid;
+                break;
+            }
+            $attempts--;
+        }
+    }
+
+    if (! isPidRunning($trackedPid)) {
+        fail("Failed starting {$name}. Check production logs in {$logsDir}.");
+    }
+
+    $processes[$name] = $trackedPid;
+}
 mark('prod up: processes started', $runnerLogFile);
 
 file_put_contents($pidFile, json_encode($processes, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));

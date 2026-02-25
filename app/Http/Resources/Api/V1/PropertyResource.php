@@ -17,6 +17,7 @@ class PropertyResource extends JsonResource
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
+            'agent_id' => $this->agent_id,
             'title' => $this->title,
             'slug' => $this->slug,
             'description' => $this->description,
@@ -47,6 +48,11 @@ class PropertyResource extends JsonResource
                 'first_name' => $this->agent?->first_name,
                 'last_name' => $this->agent?->last_name,
                 'full_name' => $this->agent?->full_name,
+                'email' => $this->agent?->email,
+                'phone' => $this->agent?->phone,
+                'avatar_path' => $this->agent?->avatar_path,
+                'position' => $this->agent?->position,
+                'is_active' => (bool) $this->agent?->is_active,
             ]),
             'primary_image' => $this->whenLoaded('primaryImage', fn () => [
                 'path' => $this->primaryImage?->path,

@@ -3,6 +3,10 @@
   flex: 0 0 auto;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 .theme-main-menu .logo img,
 .site-brand-logo {
   display: block;
@@ -41,4 +45,179 @@
 .cms-template-static .main-page-wrapper > .footer-four,
 .cms-template-static .main-page-wrapper > .footer-five {
   display: none !important;
+}
+
+:root {
+  --listing-card-media-ratio: 4 / 3;
+}
+
+.listing-card-one .img-gallery .position-relative {
+  aspect-ratio: var(--listing-card-media-ratio);
+  background: #f4f4f4;
+}
+
+.listing-card-one .img-gallery .carousel-inner,
+.listing-card-one .img-gallery .carousel-item,
+.listing-card-one .img-gallery .position-relative > a.d-block {
+  width: 100%;
+  height: 100%;
+}
+
+.listing-card-one .img-gallery img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.listing-card-seven .layout-one .img-gallery,
+.listing-card-seven .layout-two .img-gallery {
+  aspect-ratio: 16 / 11;
+  min-height: 260px;
+  background-size: cover;
+  background-position: center;
+}
+
+.listing-details-one .media-gallery .carousel-item img,
+.listing-details-one .media-gallery .carousel-indicators img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: center;
+}
+
+.portal-auth-card {
+  max-width: 560px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #e9e9e9;
+  border-radius: 20px;
+  padding: 36px 30px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.05);
+}
+
+.portal-header-card {
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.portal-user-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.portal-user-meta {
+  min-width: 180px;
+}
+
+.portal-user-meta small {
+  color: #64748b;
+}
+
+.footer-link-columns {
+  gap: 24px 36px;
+}
+
+.footer-link-columns .footer-nav {
+  min-width: 160px;
+}
+
+.footer-nav-link.compact li + li {
+  margin-top: 8px;
+}
+
+.footer-help-card {
+  min-width: 260px;
+  max-width: 320px;
+  padding: 24px;
+  border-radius: 16px;
+  background: #fff4ef;
+  border: 1px solid #ffe0d2;
+}
+
+.footer-help-card .btn-nine {
+  line-height: 48px;
+  min-width: 100%;
+}
+
+.footer-help-email {
+  color: #0c0c0c;
+  font-weight: 500;
+}
+
+.footer-help-email:hover {
+  color: #ff6725;
+}
+
+[data-scroll-reveal] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+[data-scroll-reveal].is-pending {
+  opacity: 0;
+  transform: translate3d(0, 34px, 0) scale(0.985);
+}
+
+[data-scroll-reveal="left"].is-pending {
+  transform: translate3d(-34px, 0, 0) scale(0.985);
+}
+
+[data-scroll-reveal="right"].is-pending {
+  transform: translate3d(34px, 0, 0) scale(0.985);
+}
+
+[data-scroll-reveal="zoom"].is-pending {
+  transform: scale(0.94);
+}
+
+[data-scroll-reveal].is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+@media (max-width: 991px) {
+  .listing-card-seven .layout-one .img-gallery,
+  .listing-card-seven .layout-two .img-gallery {
+    min-height: 230px;
+  }
+}
+
+@media (max-width: 767px) {
+  .portal-auth-card {
+    padding: 30px 20px;
+    border-radius: 16px;
+  }
+
+  .listing-card-seven .layout-one .img-gallery,
+  .listing-card-seven .layout-two .img-gallery {
+    min-height: 210px;
+  }
+
+  .footer-help-card {
+    min-width: 100%;
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  [data-scroll-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }

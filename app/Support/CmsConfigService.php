@@ -361,7 +361,9 @@ class CmsConfigService
                 }
 
                 return str_starts_with($page['slug_path'], 'dashboard')
-                    || str_starts_with($page['slug_path'], 'admin');
+                    || str_starts_with($page['slug_path'], 'admin')
+                    || str_starts_with($page['slug_path'], 'portal')
+                    || $page['slug_path'] === 'login';
             })
             ->pluck('slug_path')
             ->filter()
@@ -430,7 +432,9 @@ class CmsConfigService
                 $slugPath = (string) $page->slug_path;
 
                 return ! str_starts_with($slugPath, 'dashboard')
-                    && ! str_starts_with($slugPath, 'admin');
+                    && ! str_starts_with($slugPath, 'admin')
+                    && ! str_starts_with($slugPath, 'portal')
+                    && $slugPath !== 'login';
             })
             ->sortBy([
                 ['nav_order', 'asc'],

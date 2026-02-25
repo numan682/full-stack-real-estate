@@ -8,17 +8,39 @@ import {
 } from "@/lib/admin/backend-client";
 import { requireAdminUser } from "@/lib/admin/auth";
 
-function parseSeoPayload(raw: string) {
-  if (!raw.trim()) {
-    return {};
+function parseSeoPayload(formData: FormData) {
+  const title = String(formData.get("seo_meta_title") ?? "").trim();
+  const description = String(formData.get("seo_meta_description") ?? "").trim();
+  const canonical = String(formData.get("seo_canonical_url") ?? "").trim();
+  const robots = String(formData.get("seo_robots") ?? "").trim();
+  const keywords = String(formData.get("seo_meta_keywords") ?? "")
+    .split(",")
+    .map((keyword) => keyword.trim())
+    .filter((keyword) => keyword !== "");
+
+  const payload: Record<string, unknown> = {};
+
+  if (title) {
+    payload.title = title;
   }
 
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-  } catch {
-    return {};
+  if (description) {
+    payload.description = description;
   }
+
+  if (canonical) {
+    payload.canonical = canonical;
+  }
+
+  if (keywords.length > 0) {
+    payload.keywords = keywords;
+  }
+
+  if (robots) {
+    payload.robots = robots;
+  }
+
+  return payload;
 }
 
 export async function createBlogAction(formData: FormData) {
@@ -35,20 +57,21 @@ export async function createBlogAction(formData: FormData) {
     content: String(formData.get("content") ?? "").trim(),
     published_at: String(formData.get("published_at") ?? "").trim(),
     is_featured: String(formData.get("is_featured") ?? "") === "on",
-    seo_payload: parseSeoPayload(String(formData.get("seo_payload_json") ?? "{}")),
+    seo_payload: parseSeoPayload(formData),
   };
 
   if (!payload.title) {
-    redirect("/admin/blogs?error=Title%20is%20required");
+    redirect("/admin/blogs/new?error=Title%20is%20required");
   }
 
   const response = await createAdminBlog(payload);
 
   if (!response.ok) {
-    redirect(`/admin/blogs?error=${encodeURIComponent(response.message ?? "Failed to create blog post.")}`);
+    redirect(`/admin/blogs/new?error=${encodeURIComponent(response.message ?? "Failed to create blog post.")}`);
   }
 
   revalidatePath("/admin/blogs");
+  revalidatePath("/admin/blogs/new");
   redirect("/admin/blogs?status=blog-created");
 }
 

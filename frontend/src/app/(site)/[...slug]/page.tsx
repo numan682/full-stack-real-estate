@@ -20,7 +20,10 @@ type SlugPageProps = {
 export async function generateStaticParams() {
   return getTemplateStaticParams().filter((param) => {
     const firstSegment = param.slug[0];
-    return firstSegment !== "dashboard" && firstSegment !== "admin";
+    return firstSegment !== "dashboard"
+      && firstSegment !== "admin"
+      && firstSegment !== "portal"
+      && firstSegment !== "login";
   });
 }
 

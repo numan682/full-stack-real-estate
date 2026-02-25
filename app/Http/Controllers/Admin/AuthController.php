@@ -12,7 +12,7 @@ class AuthController extends Controller
 {
     public function showLogin(): View|RedirectResponse
     {
-        if (Auth::check() && Auth::user()?->is_admin) {
+        if (Auth::check() && Auth::user()?->isAdmin()) {
             return redirect()->route('admin.dashboard');
         }
 
@@ -36,7 +36,7 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        if (! $request->user()?->is_admin) {
+        if (! $request->user()?->isAdmin()) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

@@ -15,7 +15,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
   try {
     const pageModule = await resolvedPage.moduleLoader();
-    return toNextMetadata(withSeoDefaults(pageModule.metadata, resolvedPage.routePath));
+    return toNextMetadata(
+      withSeoDefaults(
+        {
+          ...pageModule.metadata,
+          ...resolvedPage.seoOverride,
+        },
+        resolvedPage.routePath,
+      ),
+    );
   } catch {
     return toNextMetadata(withSeoDefaults(fallbackNotFoundMetadata, "/"));
   }
@@ -36,7 +44,7 @@ export default async function HomePage() {
   }
 
   return (
-    <TemplateCmsFrame cmsConfig={cmsConfig}>
+    <TemplateCmsFrame cmsConfig={cmsConfig} contentOverrides={resolvedPage.contentOverride}>
       <PageComponent />
     </TemplateCmsFrame>
   );

@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class AdminApiTokenService
 {
-    public function issueToken(User $user, bool $remember = false): array
+    public function issueToken(User $user, bool $remember = false, string $tokenName = 'portal-session'): array
     {
         $this->deleteExpiredTokens();
 
@@ -18,7 +18,7 @@ class AdminApiTokenService
 
         $token = AdminApiToken::query()->create([
             'user_id' => $user->id,
-            'name' => 'admin-panel',
+            'name' => mb_substr(trim($tokenName), 0, 100) ?: 'portal-session',
             'token_hash' => $this->hashToken($plainTextToken),
             'expires_at' => $expiresAt,
         ]);

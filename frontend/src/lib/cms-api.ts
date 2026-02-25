@@ -42,6 +42,8 @@ export type CmsGlobalSettings = {
     announcement_link?: string;
     home_nav_label?: string;
     login_label?: string;
+    contact_label?: string;
+    contact_link?: string;
     add_listing_label?: string;
     add_listing_link?: string;
   };

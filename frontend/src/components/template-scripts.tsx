@@ -186,6 +186,10 @@ export function TemplateScripts({ scripts }: TemplateScriptsProps) {
   const scriptsKey = orderedScripts.join("|");
 
   useEffect(() => {
+    if (orderedScripts.length === 0) {
+      return;
+    }
+
     let isCancelled = false;
 
     const hardFallbackTimer = window.setTimeout(() => {

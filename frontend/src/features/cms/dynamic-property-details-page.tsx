@@ -4,7 +4,7 @@ import { TemplatePageShell } from "@/components/template-page-shell";
 import { LoginModal } from "@/features/shared/login-modal";
 import { ScrollTopButton } from "@/features/shared/scroll-top";
 import { cmsThemeScripts } from "@/features/cms/cms-theme-scripts";
-import { getBackendBaseUrl } from "@/lib/api-base";
+import { PropertySidebarWidgets } from "@/features/cms/property-sidebar-widgets";
 import { fetchPublicProperties, fetchPublicProperty, type PublicProperty } from "@/lib/public-api";
 
 type DynamicPropertyDetailsPageProps = {
@@ -166,6 +166,11 @@ function propertyImageSources(property: PublicProperty) {
   ];
 }
 
+function toPhoneHref(phone: string) {
+  const normalized = phone.replace(/[^\d+]/g, "");
+  return normalized === "" ? "#" : `tel:${normalized}`;
+}
+
 function detailPath(basePath: string, slug: string) {
   const normalizedBase = basePath === "/" ? "" : basePath.replace(/\/+$/, "");
   return `${normalizedBase}/${slug}`;
@@ -222,6 +227,34 @@ export async function DynamicPropertyDetailsPage({
   const useTemplateTwo = detailTemplate === "listing_details_02";
   const showVideo = useTemplateTwo && toBooleanValue(pageContent?.details_video_enabled, true);
   const videoUrl = toStringValue(pageContent?.details_video_url, "https://creativegigstf.com/video/intro_4.mp4");
+  const backButtonLabel = toStringValue(pageContent?.details_back_label, "Back to Listings");
+  const priceLabel = toStringValue(pageContent?.details_price_label, "Price:");
+  const estimateLabel = toStringValue(pageContent?.details_est_payment_label, "Est. Payment");
+  const shareLabel = toStringValue(pageContent?.details_share_label, "Share");
+  const overviewBlockTitle = toStringValue(pageContent?.details_overview_block_title, "Property Overview");
+  const overviewTitle = toStringValue(pageContent?.details_overview_title, "Overview");
+  const overviewEmptyText = toStringValue(pageContent?.details_overview_empty, "No description has been published for this property yet.");
+  const featuresTitle = toStringValue(pageContent?.details_features_title, "Property Features");
+  const featuresSubtitle = toStringValue(
+    pageContent?.details_features_subtitle,
+    "All key details are synced from your CMS-managed property records.",
+  );
+  const propertyDetailsLabel = toStringValue(pageContent?.details_features_property_details_label, "Property Details");
+  const utilityDetailsLabel = toStringValue(pageContent?.details_features_utility_details_label, "Utility Details");
+  const outdoorFeaturesLabel = toStringValue(pageContent?.details_features_outdoor_features_label, "Outdoor Features");
+  const amenitiesTitle = toStringValue(pageContent?.details_amenities_title, "Amenities");
+  const amenitiesSubtitle = toStringValue(
+    pageContent?.details_amenities_subtitle,
+    "Feature sets below are dynamic and manageable from the admin property editor.",
+  );
+  const contactAgentLabel = toStringValue(pageContent?.details_contact_button_label, "CONTACT AGENT");
+  const featuredListingTitle = toStringValue(pageContent?.details_featured_listing_title, "Featured Listing");
+  const featuredListingEmpty = toStringValue(pageContent?.details_featured_listing_empty, "No featured properties available right now.");
+  const badgeSqftLabel = toStringValue(pageContent?.details_badge_sqft_label, "Sqft");
+  const badgeBedLabel = toStringValue(pageContent?.details_badge_bed_label, "Bed");
+  const badgeBathLabel = toStringValue(pageContent?.details_badge_bath_label, "Bath");
+  const badgeKitchenLabel = toStringValue(pageContent?.details_badge_kitchen_label, "Kitchen");
+  const badgeTypeLabel = toStringValue(pageContent?.details_badge_type_label, "Type");
   const images = propertyImageSources(property);
   const features = normalizeFeatures(property.features);
   const amenities = features.length > 0
@@ -252,12 +285,14 @@ export async function DynamicPropertyDetailsPage({
   const featuredCarouselId = `featured_listing_${property.id}`;
 
   const agentName = buildAgentName(property);
+  const agentRole = toStringValue(property.agent?.position, toStringValue(pageContent?.agent_position, "Property Agent & Broker"));
+  const agentAvatarPath = toStringValue(property.agent?.avatar_path, toStringValue(pageContent?.agent_avatar_path, "/images/agent/img_06.jpg"));
   const agentLocation = toStringValue(pageContent?.agent_location, `${property.city}, ${property.country}`);
-  const agentEmail = toStringValue(pageContent?.agent_email, "hello@homerealestate.com");
-  const agentPhone = toStringValue(pageContent?.agent_phone, "+1 (555) 123-9876");
-  const contactLink = toStringValue(pageContent?.contact_link, "/contact");
-
-  const inquiryEndpoint = `${getBackendBaseUrl()}/api/v1/inquiries`;
+  const agentEmail = toStringValue(property.agent?.email, toStringValue(pageContent?.agent_email, "hello@homerealestate.com"));
+  const agentPhone = toStringValue(property.agent?.phone, toStringValue(pageContent?.agent_phone, "+1 (555) 123-9876"));
+  const contactLink = agentEmail !== ""
+    ? `mailto:${agentEmail}`
+    : toStringValue(pageContent?.contact_link, "/contact");
 
   const overviewRows: Array<[string, string]> = [
     ["Bedrooms", String(property.bedrooms ?? "-")],
@@ -294,14 +329,14 @@ export async function DynamicPropertyDetailsPage({
           <div className="address mt-15"><i className="bi bi-geo-alt"></i> {address}</div>
         </div>
       </div>
-      <div className="col-lg-6 text-lg-end">
+          <div className="col-lg-6 text-lg-end">
         <div className="d-inline-block md-mt-40">
-          <div className="price color-dark fw-500">Price: {formatPrice(property.price)}</div>
+          <div className="price color-dark fw-500">{`${priceLabel} ${formatPrice(property.price)}`}</div>
           <div className="est-price fs-20 mt-25 mb-35 md-mb-30">
-            Est. Payment <span className="fw-500 color-dark">{monthlyPayment === null ? "N/A" : `${formatPrice(monthlyPayment)}/mo*`}</span>
+            {estimateLabel} <span className="fw-500 color-dark">{monthlyPayment === null ? "N/A" : `${formatPrice(monthlyPayment)}/mo*`}</span>
           </div>
           <ul className="style-none d-flex align-items-center action-btns">
-            <li className="me-auto fw-500 color-dark"><i className="fa-sharp fa-regular fa-share-nodes me-2"></i> Share</li>
+            <li className="me-auto fw-500 color-dark"><i className="fa-sharp fa-regular fa-share-nodes me-2"></i> {shareLabel}</li>
             <li><a href="#" className="d-flex align-items-center justify-content-center rounded-circle tran3s"><i className="fa-light fa-heart"></i></a></li>
             <li><a href="#" className="d-flex align-items-center justify-content-center rounded-circle tran3s"><i className="fa-light fa-bookmark"></i></a></li>
             <li><a href="#" className="d-flex align-items-center justify-content-center rounded-circle tran3s"><i className="fa-light fa-circle-plus"></i></a></li>
@@ -317,27 +352,27 @@ export async function DynamicPropertyDetailsPage({
 
   const featureOverviewBlock = (
     <div className={featureOverviewClassName}>
-      {!useTemplateTwo ? <h4 className="sub-title-one mb-40 lg-mb-20">Property Overview</h4> : null}
+      {!useTemplateTwo ? <h4 className="sub-title-one mb-40 lg-mb-20">{overviewBlockTitle}</h4> : null}
       <ul className="style-none d-flex flex-wrap align-items-center justify-content-between">
         <li>
           <img src="/images/lazy.svg" data-src="/images/icon/icon_47.svg" alt="" className="lazy-img icon" />
-          <span className="fs-20 color-dark">Sqft . {property.area_sqft ?? "-"}</span>
+          <span className="fs-20 color-dark">{`${badgeSqftLabel} . ${property.area_sqft ?? "-"}`}</span>
         </li>
         <li>
           <img src="/images/lazy.svg" data-src="/images/icon/icon_48.svg" alt="" className="lazy-img icon" />
-          <span className="fs-20 color-dark">Bed . {property.bedrooms ?? "-"}</span>
+          <span className="fs-20 color-dark">{`${badgeBedLabel} . ${property.bedrooms ?? "-"}`}</span>
         </li>
         <li>
           <img src="/images/lazy.svg" data-src="/images/icon/icon_49.svg" alt="" className="lazy-img icon" />
-          <span className="fs-20 color-dark">Bath . {property.bathrooms ?? "-"}</span>
+          <span className="fs-20 color-dark">{`${badgeBathLabel} . ${property.bathrooms ?? "-"}`}</span>
         </li>
         <li>
           <img src="/images/lazy.svg" data-src="/images/icon/icon_50.svg" alt="" className="lazy-img icon" />
-          <span className="fs-20 color-dark">Kitchen . {String(kitchenCount).padStart(2, "0")}</span>
+          <span className="fs-20 color-dark">{`${badgeKitchenLabel} . ${String(kitchenCount).padStart(2, "0")}`}</span>
         </li>
         <li>
           <img src="/images/lazy.svg" data-src="/images/icon/icon_51.svg" alt="" className="lazy-img icon" />
-          <span className="fs-20 color-dark">Type . {propertyTypeLabel}</span>
+          <span className="fs-20 color-dark">{`${badgeTypeLabel} . ${propertyTypeLabel}`}</span>
         </li>
       </ul>
     </div>
@@ -358,7 +393,7 @@ export async function DynamicPropertyDetailsPage({
           <div className="container">
             <div className="mb-35">
               <Link href={listPath} className="btn-three">
-                <span>Back to Listings</span>
+                <span>{backButtonLabel}</span>
               </Link>
             </div>
 
@@ -437,22 +472,22 @@ export async function DynamicPropertyDetailsPage({
             <div className="row">
               <div className="col-xl-8">
                 <div className="property-overview bg-white shadow4 border-20 p-40 mb-50">
-                  <h4 className="mb-20">Overview</h4>
+                  <h4 className="mb-20">{overviewTitle}</h4>
                   <p className="fs-20 lh-lg">
-                    {property.description ?? "No description has been published for this property yet."}
+                    {property.description ?? overviewEmptyText}
                   </p>
                 </div>
 
                 <div className="property-feature-accordion bg-white shadow4 border-20 p-40 mb-50">
-                  <h4 className="mb-20">Property Features</h4>
-                  <p className="fs-20 lh-lg">All key details are synced from your CMS-managed property records.</p>
+                  <h4 className="mb-20">{featuresTitle}</h4>
+                  <p className="fs-20 lh-lg">{featuresSubtitle}</p>
 
                   <div className="accordion-style-two mt-45">
                     <div className="accordion" id={accordionId}>
                       <div className="accordion-item">
                         <h2 className="accordion-header">
                           <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target={`#${detailCollapseId}`} aria-expanded="true" aria-controls={detailCollapseId}>
-                            Property Details
+                            {propertyDetailsLabel}
                           </button>
                         </h2>
                         <div id={detailCollapseId} className="accordion-collapse collapse show" data-bs-parent={`#${accordionId}`}>
@@ -471,7 +506,7 @@ export async function DynamicPropertyDetailsPage({
                       <div className="accordion-item">
                         <h2 className="accordion-header">
                           <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target={`#${utilityCollapseId}`} aria-expanded="false" aria-controls={utilityCollapseId}>
-                            Utility Details
+                            {utilityDetailsLabel}
                           </button>
                         </h2>
                         <div id={utilityCollapseId} className="accordion-collapse collapse" data-bs-parent={`#${accordionId}`}>
@@ -490,7 +525,7 @@ export async function DynamicPropertyDetailsPage({
                       <div className="accordion-item">
                         <h2 className="accordion-header">
                           <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target={`#${outdoorCollapseId}`} aria-expanded="false" aria-controls={outdoorCollapseId}>
-                            Outdoor Features
+                            {outdoorFeaturesLabel}
                           </button>
                         </h2>
                         <div id={outdoorCollapseId} className="accordion-collapse collapse" data-bs-parent={`#${accordionId}`}>
@@ -510,8 +545,8 @@ export async function DynamicPropertyDetailsPage({
                 </div>
 
                 <div className="property-amenities bg-white shadow4 border-20 p-40 mb-50">
-                  <h4 className="mb-20">Amenities</h4>
-                  <p className="fs-20 lh-lg pb-25">Feature sets below are dynamic and manageable from the admin property editor.</p>
+                  <h4 className="mb-20">{amenitiesTitle}</h4>
+                  <p className="fs-20 lh-lg pb-25">{amenitiesSubtitle}</p>
                   <ul className="style-none d-flex flex-wrap justify-content-between list-style-two">
                     {amenities.map((amenity) => (
                       <li key={amenity}>{amenity}</li>
@@ -523,10 +558,10 @@ export async function DynamicPropertyDetailsPage({
               <div className="col-xl-4 col-lg-8 me-auto ms-auto">
                 <div className="theme-sidebar-one dot-bg p-30 ms-xxl-3 lg-mt-80">
                   <div className="agent-info bg-white border-20 p-30 mb-40">
-                    <img src="/images/lazy.svg" data-src="/images/agent/img_06.jpg" alt="" className="lazy-img rounded-circle ms-auto me-auto mt-3 avatar" />
+                    <img src="/images/lazy.svg" data-src={agentAvatarPath} alt={agentName} className="lazy-img rounded-circle ms-auto me-auto mt-3 avatar" />
                     <div className="text-center mt-25">
                       <h6 className="name">{agentName}</h6>
-                      <p className="fs-16">Property Agent & Broker</p>
+                      <p className="fs-16">{agentRole}</p>
                       <ul className="style-none d-flex align-items-center justify-content-center social-icon">
                         <li><a href="#"><i className="fa-brands fa-facebook-f"></i></a></li>
                         <li><a href="#"><i className="fa-brands fa-twitter"></i></a></li>
@@ -538,72 +573,24 @@ export async function DynamicPropertyDetailsPage({
                       <ul className="style-none">
                         <li>Location: <span>{agentLocation}</span></li>
                         <li>Email: <span><a href={`mailto:${agentEmail}`}>{agentEmail}</a></span></li>
-                        <li>Phone: <span><a href={`tel:${agentPhone.replace(/\s+/g, "")}`}>{agentPhone}</a></span></li>
+                        <li>Phone: <span><a href={toPhoneHref(agentPhone)}>{agentPhone}</a></span></li>
                       </ul>
                     </div>
 
-                    <Link href={contactLink} className="btn-nine text-uppercase rounded-3 w-100 mb-10">CONTACT AGENT</Link>
+                    <Link href={contactLink} className="btn-nine text-uppercase rounded-3 w-100 mb-10">{contactAgentLabel}</Link>
                   </div>
 
-                  <div className="tour-schedule bg-white border-20 p-30 mb-40">
-                    <h5 className="mb-40">Schedule Tour</h5>
-                    <form action={inquiryEndpoint} method="post">
-                      <input type="hidden" name="property_id" value={String(property.id)} />
-                      <input type="hidden" name="source" value="listing-page" />
-
-                      <div className="input-box-three mb-25">
-                        <div className="label">Your Name*</div>
-                        <input name="full_name" type="text" placeholder="Your full name" className="type-input" required />
-                      </div>
-
-                      <div className="input-box-three mb-25">
-                        <div className="label">Your Email*</div>
-                        <input name="email" type="email" placeholder="Enter mail address" className="type-input" required />
-                      </div>
-
-                      <div className="input-box-three mb-25">
-                        <div className="label">Your Phone*</div>
-                        <input name="phone" type="tel" placeholder="Your phone number" className="type-input" />
-                      </div>
-
-                      <div className="input-box-three mb-15">
-                        <div className="label">Message*</div>
-                        <textarea name="message" defaultValue={`Hello, I am interested in [${title}]`} required></textarea>
-                      </div>
-
-                      <button className="btn-nine text-uppercase rounded-3 w-100 mb-10" type="submit">INQUIRY</button>
-                    </form>
-                  </div>
-
-                  <div className="mortgage-calculator bg-white border-20 p-30 mb-40">
-                    <h5 className="mb-40">Mortgage Calculator</h5>
-                    <form action="#">
-                      <div className="input-box-three mb-25">
-                        <div className="label">Home Price*</div>
-                        <input type="text" defaultValue={priceNumber === null ? "" : Math.round(priceNumber).toLocaleString("en-US")} className="type-input" />
-                      </div>
-
-                      <div className="input-box-three mb-25">
-                        <div className="label">Down Payment*</div>
-                        <input type="text" defaultValue={`${Math.round(downPaymentPercent * 100)}%`} className="type-input" />
-                      </div>
-
-                      <div className="input-box-three mb-25">
-                        <div className="label">Interest Rate*</div>
-                        <input type="text" defaultValue={`${(annualInterestRate * 100).toFixed(2)}%`} className="type-input" />
-                      </div>
-
-                      <div className="input-box-three mb-25">
-                        <div className="label">Loan Terms (Years)</div>
-                        <input type="text" defaultValue={String(loanYears)} className="type-input" />
-                      </div>
-
-                      <button className="btn-five text-uppercase sm rounded-3 w-100 mb-10" type="button">CALCULATE</button>
-                    </form>
-                  </div>
+                  <PropertySidebarWidgets
+                    propertyId={property.id}
+                    propertyTitle={title}
+                    defaultHomePrice={priceNumber}
+                    defaultDownPaymentPercent={downPaymentPercent * 100}
+                    defaultInterestRatePercent={annualInterestRate * 100}
+                    defaultLoanYears={loanYears}
+                  />
 
                   <div className="feature-listing bg-white border-20 p-30">
-                    <h5 className="mb-40">Featured Listing</h5>
+                    <h5 className="mb-40">{featuredListingTitle}</h5>
 
                     {featuredProperties.length > 0 ? (
                       <div id={featuredCarouselId} className="carousel slide">
@@ -652,7 +639,7 @@ export async function DynamicPropertyDetailsPage({
                         </div>
                       </div>
                     ) : (
-                      <p className="fs-16 m0">No featured properties available right now.</p>
+                      <p className="fs-16 m0">{featuredListingEmpty}</p>
                     )}
                   </div>
                 </div>

@@ -27,7 +27,7 @@ class AuthenticateAdminApiToken
         $adminApiTokenService = app(AdminApiTokenService::class);
         $token = $adminApiTokenService->findValidToken($bearerToken);
 
-        if (! $token || ! $token->user || ! $token->user->is_admin) {
+        if (! $token || ! $token->user || ! $token->user->isAdmin()) {
             return response()->json([
                 'message' => 'Unauthenticated.',
             ], Response::HTTP_UNAUTHORIZED);

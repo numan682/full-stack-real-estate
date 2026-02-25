@@ -2,41 +2,23 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Domain\Inquiries\InquiryManagementService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\InquiryIndexRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateInquiryStatusRequest;
 use App\Http\Resources\Api\V1\Admin\InquiryResource;
-use App\Models\Inquiry;
 use Illuminate\Http\JsonResponse;
 
 class InquiryController extends Controller
 {
+    public function __construct(
+        private readonly InquiryManagementService $inquiryManagementService
+    ) {}
+
     public function index(InquiryIndexRequest $request)
     {
         $filters = $request->validated();
-
-        $query = Inquiry::query()
-            ->with('property:id,title,slug');
-
-        if (! empty($filters['search'])) {
-            $search = trim((string) $filters['search']);
-            $query->where(function ($builder) use ($search): void {
-                $builder
-                    ->where('full_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('message', 'like', "%{$search}%");
-            });
-        }
-
-        if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-
-        $perPage = (int) ($filters['per_page'] ?? 30);
-        $inquiries = $query
-            ->latest('id')
-            ->paginate($perPage)
-            ->withQueryString();
+        $inquiries = $this->inquiryManagementService->search($filters);
 
         return response()->json([
             'data' => InquiryResource::collection($inquiries->getCollection())->resolve(),
@@ -51,12 +33,11 @@ class InquiryController extends Controller
 
     public function updateStatus(UpdateInquiryStatusRequest $request, int $inquiryId): JsonResponse
     {
-        $inquiry = Inquiry::query()->findOrFail($inquiryId);
-        $inquiry->update([
-            'status' => $request->validated('status'),
-        ]);
-
-        $inquiry->load('property:id,title,slug');
+        $inquiry = $this->inquiryManagementService->findForStatusUpdate($inquiryId);
+        $inquiry = $this->inquiryManagementService->updateStatus(
+            $inquiry,
+            (string) $request->validated('status'),
+        );
 
         return response()->json([
             'message' => 'Inquiry status updated.',

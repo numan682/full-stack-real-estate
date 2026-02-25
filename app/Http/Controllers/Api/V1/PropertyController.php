@@ -27,7 +27,7 @@ class PropertyController extends Controller
 
         $property->load([
             'agency:id,name,slug',
-            'agent:id,first_name,last_name,agency_id',
+            'agent:id,first_name,last_name,email,phone,avatar_path,position,is_active,agency_id',
             'images:id,property_id,path,alt_text,sort_order,is_primary',
             'primaryImage:id,property_id,path,alt_text',
         ]);

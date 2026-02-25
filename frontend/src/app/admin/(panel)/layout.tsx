@@ -15,27 +15,49 @@ export default async function AdminPanelLayout({ children }: AdminPanelLayoutPro
     <div className="admin-page">
       <div className="admin-grid">
         <aside className="admin-sidebar">
-          <h1>RealEstate Admin</h1>
-          <AdminNav />
-
-          <div style={{ marginTop: 28 }}>
-            <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>Signed in as</div>
-            <div style={{ fontSize: 13, color: "#fff" }}>{adminUser.name}</div>
-            <div style={{ fontSize: 12, opacity: 0.75 }}>{adminUser.email}</div>
+          <div className="admin-sidebar-brand">
+            <span className="admin-sidebar-kicker">Admin Dashboard</span>
+            <h1>RealEstate</h1>
           </div>
 
-          <form action={logoutAdminAction} style={{ marginTop: 18 }}>
-            <button className="admin-btn secondary" type="submit">Logout</button>
-          </form>
+          <div className="admin-sidebar-section">
+            <div className="admin-sidebar-section-title">Navigation</div>
+            <AdminNav />
+          </div>
 
-          <div style={{ marginTop: 20 }}>
+          <div className="admin-sidebar-profile">
+            <div className="admin-sidebar-section-title">Signed In</div>
+            <div className="admin-sidebar-profile-name">{adminUser.name}</div>
+            <div className="admin-sidebar-profile-email">{adminUser.email}</div>
+          </div>
+
+          <div className="admin-sidebar-actions">
+            <form action={logoutAdminAction}>
+              <button className="admin-btn secondary" type="submit">Logout</button>
+            </form>
+
             <Link href="/" className="admin-btn" target="_blank" rel="noopener noreferrer">
               Open Website
             </Link>
           </div>
         </aside>
 
-        <main className="admin-main">{children}</main>
+        <main className="admin-main">
+          <header className="admin-topbar">
+            <div>
+              <div className="admin-topbar-label">Workspace</div>
+              <h2>Operations Dashboard</h2>
+            </div>
+            <div className="admin-topbar-meta">
+              <strong>{adminUser.name}</strong>
+              <span>{adminUser.email}</span>
+            </div>
+          </header>
+
+          <div className="admin-main-content">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

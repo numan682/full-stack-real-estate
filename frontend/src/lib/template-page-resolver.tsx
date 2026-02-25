@@ -1,9 +1,12 @@
 import { HomePageTemplate, homePageMetadata } from "@/features/home/home-page";
 import { DynamicBlogPage } from "@/features/cms/dynamic-blog-page";
 import { DynamicBlogPostPage } from "@/features/cms/dynamic-blog-post-page";
+import { DynamicAgentsPage } from "@/features/cms/dynamic-agents-page";
+import { DynamicAgentDetailsPage } from "@/features/cms/dynamic-agent-details-page";
 import { DynamicCmsPage } from "@/features/cms/dynamic-page";
 import { DynamicListingsPage } from "@/features/cms/dynamic-listings-page";
 import { DynamicPropertyDetailsPage } from "@/features/cms/dynamic-property-details-page";
+import { DynamicMarketingTemplatePage } from "@/features/cms/dynamic-marketing-template-page";
 import {
   getNotFoundTemplate,
   getTemplatePageBySlug,
@@ -56,7 +59,10 @@ function normalizeSlugPath(slugPath: string) {
 function isBlockedPublicSlug(slug: string[]) {
   const firstSegment = slug[0];
 
-  return firstSegment === "dashboard" || firstSegment === "admin";
+  return firstSegment === "dashboard"
+    || firstSegment === "admin"
+    || firstSegment === "portal"
+    || firstSegment === "login";
 }
 
 function isListingCollectionTemplateKey(templateKey: string) {
@@ -65,6 +71,23 @@ function isListingCollectionTemplateKey(templateKey: string) {
 
 function isBlogCollectionTemplateKey(templateKey: string) {
   return templateKey === "blog_dynamic" || /^blog_\d+$/i.test(templateKey);
+}
+
+function isAgentCollectionTemplateKey(templateKey: string) {
+  return templateKey === "agent";
+}
+
+function isMarketingTemplateKey(templateKey: string) {
+  return /^about_us_\d+$/i.test(templateKey)
+    || templateKey === "contact"
+    || templateKey === "faq"
+    || /^pricing_\d+$/i.test(templateKey)
+    || /^project_\d+$/i.test(templateKey)
+    || /^project_details_\d+$/i.test(templateKey)
+    || /^service_\d+$/i.test(templateKey)
+    || templateKey === "service_details"
+    || templateKey === "agency"
+    || templateKey === "agency_details";
 }
 
 function listingTemplateNumber(templateKey: string): number | null {
@@ -109,7 +132,11 @@ function resolveListingDetailsTemplateKey(
   return "listing_details_01";
 }
 
-function buildHome01Page(routePath = "/"): ResolvedTemplatePage {
+function buildHome01Page(
+  routePath = "/",
+  seoOverride?: Partial<SeoMetadata>,
+  contentOverride?: Record<string, unknown>,
+): ResolvedTemplatePage {
   return {
     moduleLoader: async () => ({
       default: HomePageTemplate,
@@ -118,6 +145,8 @@ function buildHome01Page(routePath = "/"): ResolvedTemplatePage {
     routePath,
     usesCmsProvider: true,
     isNotFound: false,
+    seoOverride,
+    contentOverride,
   };
 }
 
@@ -143,16 +172,22 @@ function mapTemplateEntry(
 
 export function resolveHomeTemplateRoute(cmsConfig: CmsConfigPayload): ResolvedTemplatePage {
   const selectedHomeTemplate = cmsConfig.homeTemplate;
+  const homeCmsPage = cmsConfig.pages.find((page) => page.pageKey === "home");
+  const seoOverride = homeCmsPage ? toSeoOverride(homeCmsPage) : undefined;
+  const contentOverride = homeCmsPage?.content;
 
   if (selectedHomeTemplate && selectedHomeTemplate !== "home_01") {
     const selectedHomePage = getTemplatePageBySlug([selectedHomeTemplate]);
 
     if (selectedHomePage) {
-      return mapTemplateEntry(selectedHomePage, "/");
+      return mapTemplateEntry(selectedHomePage, "/", {
+        seoOverride,
+        contentOverride,
+      });
     }
   }
 
-  return buildHome01Page();
+  return buildHome01Page("/", seoOverride, contentOverride);
 }
 
 function toSeoOverride(page: CmsPageConfig): Partial<SeoMetadata> | undefined {
@@ -262,6 +297,53 @@ function resolveByTemplateKey(
     };
   }
 
+  if (isAgentCollectionTemplateKey(templateKey)) {
+    return {
+      moduleLoader: async () => ({
+        default: () => (
+          <DynamicAgentsPage
+            routePath={routePath}
+            pageTitle={options.pageTitle ?? null}
+            pageContent={options.contentOverride}
+          />
+        ),
+        metadata: {
+          title: `${siteName} | ${options.pageTitle ?? "Agents"}`,
+          description: defaultDescription,
+        },
+      }),
+      routePath,
+      usesCmsProvider: false,
+      isNotFound: false,
+      seoOverride: options.seoOverride,
+      contentOverride: options.contentOverride,
+    };
+  }
+
+  if (isMarketingTemplateKey(templateKey)) {
+    return {
+      moduleLoader: async () => ({
+        default: () => (
+          <DynamicMarketingTemplatePage
+            routePath={routePath}
+            templateKey={templateKey}
+            pageTitle={options.pageTitle ?? null}
+            pageContent={options.contentOverride}
+          />
+        ),
+        metadata: {
+          title: `${siteName} | ${options.pageTitle ?? "Page"}`,
+          description: defaultDescription,
+        },
+      }),
+      routePath,
+      usesCmsProvider: false,
+      isNotFound: false,
+      seoOverride: options.seoOverride,
+      contentOverride: options.contentOverride,
+    };
+  }
+
   if (templateKey === "home_01") {
     return {
       ...buildHome01Page(routePath),
@@ -302,7 +384,9 @@ function resolveDynamicEntityDetailRoute(slug: string[], cmsConfig: CmsConfigPay
       return false;
     }
 
-    return isListingCollectionTemplateKey(page.templateKey) || isBlogCollectionTemplateKey(page.templateKey);
+    return isListingCollectionTemplateKey(page.templateKey)
+      || isBlogCollectionTemplateKey(page.templateKey)
+      || isAgentCollectionTemplateKey(page.templateKey);
   });
 
   for (const page of dynamicPages) {
@@ -364,6 +448,27 @@ function resolveDynamicEntityDetailRoute(slug: string[], cmsConfig: CmsConfigPay
         isNotFound: false,
       };
     }
+
+    if (isAgentCollectionTemplateKey(page.templateKey)) {
+      return {
+        moduleLoader: async () => ({
+          default: () => (
+            <DynamicAgentDetailsPage
+              listRoutePath={listRoutePath}
+              agentSlug={detailSlug}
+              pageContent={page.content}
+            />
+          ),
+          metadata: {
+            title: `${siteName} | Agent Profile`,
+            description: defaultDescription,
+          },
+        }),
+        routePath,
+        usesCmsProvider: false,
+        isNotFound: false,
+      };
+    }
   }
 
   return null;
@@ -411,6 +516,11 @@ export function resolveTemplateRouteBySlug(rawSlug: string[], cmsConfig: CmsConf
 
   if (dynamicEntityDetailPage) {
     return dynamicEntityDetailPage;
+  }
+
+  const resolvedByTemplateSlug = resolveByTemplateKey(slug.join("/"), routePath);
+  if (resolvedByTemplateSlug) {
+    return resolvedByTemplateSlug;
   }
 
   const page = getTemplatePageBySlug(slug);

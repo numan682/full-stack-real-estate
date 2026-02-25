@@ -3,6 +3,7 @@ import "server-only";
 import { getBackendBaseUrl } from "@/lib/api-base";
 import { getAdminTokenFromCookie } from "@/lib/admin/session";
 import type {
+  AdminAgent,
   AdminBlogPost,
   AdminCmsData,
   AdminDashboardData,
@@ -112,6 +113,35 @@ export async function logoutAdmin(token?: string | null) {
 
 export async function fetchAdminDashboard() {
   return adminApiFetch<AdminDashboardData>("/dashboard");
+}
+
+export async function fetchAdminAgents(query = "") {
+  const normalizedQuery = query ? `?${query.replace(/^\?/, "")}` : "";
+  return adminApiFetch<AdminAgent[]>(`/agents${normalizedQuery}`);
+}
+
+export async function fetchAdminAgent(agentId: number) {
+  return adminApiFetch<AdminAgent>(`/agents/${agentId}`);
+}
+
+export async function createAdminAgent(payload: Record<string, unknown>) {
+  return adminApiFetch<AdminAgent>("/agents", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function updateAdminAgent(agentId: number, payload: Record<string, unknown>) {
+  return adminApiFetch<AdminAgent>(`/agents/${agentId}`, {
+    method: "PUT",
+    body: payload,
+  });
+}
+
+export async function deleteAdminAgent(agentId: number) {
+  return adminApiFetch<void>(`/agents/${agentId}`, {
+    method: "DELETE",
+  });
 }
 
 export async function fetchAdminCms() {

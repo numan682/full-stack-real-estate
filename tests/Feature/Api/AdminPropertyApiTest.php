@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Agent;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,12 +14,16 @@ class AdminPropertyApiTest extends TestCase
     public function test_admin_can_crud_properties_via_api(): void
     {
         $token = $this->authenticateAdmin();
+        $agent = Agent::factory()->create([
+            'is_active' => true,
+        ]);
 
         $createResponse = $this->postJson('/api/v1/admin/properties', [
             'title' => 'API Property',
             'property_type' => 'Apartment',
             'listing_type' => 'sale',
             'status' => 'draft',
+            'agent_id' => $agent->id,
             'price' => 245000,
             'address_line' => '123 API Street',
             'city' => 'Austin',
@@ -28,7 +33,10 @@ class AdminPropertyApiTest extends TestCase
             'is_featured' => true,
         ], [
             'Authorization' => "Bearer {$token}",
-        ])->assertCreated();
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.agent.id', $agent->id)
+            ->assertJsonPath('data.agent.email', $agent->email);
 
         $propertyId = (int) $createResponse->json('data.id');
 

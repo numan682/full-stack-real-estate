@@ -521,7 +521,7 @@ return [
             'is_enabled' => true,
             'payload' => [
                 'headline' => 'Get the ideal home for your family',
-                'subtitle' => 'We’ve more than 745,000 apartments, place & plot.',
+                'subtitle' => 'We\'ve more than 745,000 apartments, place & plot.',
             ],
         ],
         [
@@ -588,12 +588,12 @@ return [
             'logo_alt' => 'Home Real Estate',
         ],
         'header' => [
-            'announcement_text' => 'The flash sale go on. The offer will end in — This Sunday',
+            'announcement_text' => 'The flash sale go on. The offer will end in - This Sunday',
             'announcement_link' => '/properties',
             'home_nav_label' => 'Home',
-            'login_label' => 'Admin Login',
-            'add_listing_label' => 'Admin Portal',
-            'add_listing_link' => '/admin/login',
+            'login_label' => 'Login',
+            'contact_label' => 'Contact',
+            'contact_link' => '/contact',
         ],
         'footer' => [
             'address' => '11910 Clyde Rapid Suite 70, Willyand, Virginia, United States',

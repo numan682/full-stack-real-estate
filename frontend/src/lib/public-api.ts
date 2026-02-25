@@ -53,6 +53,11 @@ export type PublicProperty = {
     first_name?: string | null;
     last_name?: string | null;
     full_name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    avatar_path?: string | null;
+    position?: string | null;
+    is_active?: boolean;
   };
 };
 
@@ -72,6 +77,53 @@ export type PublicBlogPost = {
   published_at?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+};
+
+export type PublicAgentProperty = {
+  id: number;
+  title: string;
+  slug: string;
+  listing_type: "sale" | "rent";
+  price: string | number;
+  address_line: string;
+  city: string;
+  state?: string | null;
+  country: string;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  area_sqft?: number | null;
+  is_featured: boolean;
+  primary_image?: {
+    path?: string | null;
+    alt_text?: string | null;
+  } | null;
+};
+
+export type PublicAgent = {
+  id: number;
+  slug: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  avatar_path?: string | null;
+  position?: string | null;
+  bio?: string | null;
+  is_active: boolean;
+  published_properties_count?: number | null;
+  agency?: {
+    id?: number | null;
+    name?: string | null;
+    slug?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    city?: string | null;
+    state?: string | null;
+    country?: string | null;
+  } | null;
+  properties?: PublicAgentProperty[];
 };
 
 type ApiResult<T> = {
@@ -207,4 +259,12 @@ export async function fetchPublicBlogs(query: Record<string, QueryValue> = {}) {
 
 export async function fetchPublicBlog(slug: string) {
   return fetchItem<PublicBlogPost>(`/api/v1/blogs/${encodeURIComponent(slug)}`);
+}
+
+export async function fetchPublicAgents(query: Record<string, QueryValue> = {}) {
+  return fetchCollection<PublicAgent>("/api/v1/agents", query);
+}
+
+export async function fetchPublicAgent(agent: string) {
+  return fetchItem<PublicAgent>(`/api/v1/agents/${encodeURIComponent(agent)}`);
 }

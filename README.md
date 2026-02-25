@@ -87,10 +87,10 @@ routes/
 1. Backend setup (Laravel):
    ```bash
    composer install
-   cp .env.example .env
-   php artisan key:generate
+   composer setup
    ```
-2. Configure DB in `.env` (already set for your case):
+   `composer setup` prepares `.env`, generates key, runs migrations/seeders, and installs frontend deps.
+2. Configure DB in `.env` (already set for your case, only change if needed):
    ```env
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
@@ -99,46 +99,111 @@ routes/
    DB_USERNAME=root
    DB_PASSWORD=
    ```
-3. Run migrations + seeders:
+3. If you need to rerun setup parts separately:
    ```bash
-   php artisan migrate --seed
+   composer setup:backend
+   composer setup:frontend
    ```
-4. Frontend setup (Next.js):
-   ```bash
-   cd frontend
-   npm install
-   cp .env.example .env.local
-   ```
-5. Start the full stack (API + queue worker + Next frontend) with one command:
-   ```bash
-   composer dev
-   ```
-   This command auto-cleans stale local dev processes/locks for this project before starting.
 
-If you want to run services in separate terminals:
+## Server Lifecycle Commands
+
+Use these as the standard 4-command workflow.
+
+### Development
+
 ```bash
-composer dev:clean
-composer dev:api
-composer dev:queue
-composer dev:frontend
+# Start
+composer serve:up
+
+# Stop
+composer serve:down
+
+# Status
+composer serve:status
+
+# Restart
+composer serve:restart
 ```
 
-If `next dev` still looks unstable on your machine, use the built frontend server instead:
+### Production
+
+```bash
+# Start
+composer prod:up
+
+# Stop
+composer prod:down
+
+# Status
+composer prod:status
+
+# Restart
+composer prod:restart
+```
+
+Optional monitoring:
+```bash
+composer serve:logs
+composer prod:logs
+```
+
+Other run modes (optional):
+
+- Foreground (single terminal, one command):
+  ```bash
+  composer dev
+  ```
+- Foreground (separate terminals):
+  ```bash
+  composer dev:clean
+  composer dev:api
+  composer dev:queue
+  composer dev:frontend
+  ```
+
+Detached per-service controls:
+```bash
+composer serve:api:start
+composer serve:api:stop
+composer serve:api:restart
+composer serve:frontend:start
+composer serve:frontend:stop
+composer serve:frontend:restart
+composer serve:queue:start
+composer serve:queue:stop
+composer serve:queue:restart
+```
+
+If `next dev` looks unstable on your machine, use the built frontend server:
 ```bash
 npm --prefix frontend run build
 composer dev:frontend:start
 ```
 
+Long-running composer scripts (`dev:*`, `serve:logs`, Docker logs) have process timeout disabled, so they do not auto-stop at 300 seconds.
+
 Use:
 - Frontend: `http://127.0.0.1:3000`
+- Unified login: `http://127.0.0.1:3000/login`
 - Admin dashboard: `http://127.0.0.1:3000/admin/login`
+- Agent portal: `http://127.0.0.1:3000/portal/agent`
+- Customer portal: `http://127.0.0.1:3000/portal/customer`
 - API: `http://127.0.0.1:8000/api/v1/*`
 
-The one-command dev runner pins Next.js to port `3000` and Laravel API to `8000`.
+The default ports are pinned to API `8000` and frontend `3000`. Override with:
+```env
+DEV_API_PORT=8000
+DEV_FRONTEND_PORT=3000
+```
 
 Seeded admin credentials:
 - `admin@homerealestate.test`
 - `admin12345`
+
+Seeded portal credentials:
+- Admin: `admin@homerealestate.test` / `admin12345` (redirects to `/admin`)
+- Agent: `agent@homerealestate.test` / `agent12345` (redirects to `/portal/agent`)
+- Customer: `customer@homerealestate.test` / `customer12345` (redirects to `/portal/customer`)
 
 ## Production Deployment (One Command, No Docker)
 
@@ -174,15 +239,53 @@ What `composer prod:up` does:
   - Laravel queue worker
   - Next.js server (`npm run start -- --port APP_PORT`)
 
-Useful commands:
+Lifecycle commands:
 ```bash
-composer prod:status
-composer prod:logs
+composer prod:up
 composer prod:down
+composer prod:status
+composer prod:restart
+```
+
+Optional logs:
+```bash
+composer prod:logs
 ```
 
 Production logs are written to:
 - `storage/logs/production`
+
+## Docker Deployment
+
+Prerequisite:
+- Docker + Docker Compose plugin
+
+1. Prepare environment:
+   ```bash
+   cp .env.production.example .env.production
+   ```
+2. Set at minimum in `.env.production`:
+   - `APP_KEY`
+   - `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+   - `DB_ROOT_PASSWORD` (required by MySQL container)
+   - `APP_PORT` (public port, defaults to `80`)
+3. Start everything:
+   ```bash
+   composer docker:up
+   ```
+4. Start backend or frontend groups independently (optional):
+```bash
+composer docker:up:backend
+composer docker:up:frontend
+```
+
+Docker lifecycle commands:
+```bash
+composer docker:status
+composer docker:logs
+composer docker:restart
+composer docker:down
+```
 
 ## Quality Checks
 

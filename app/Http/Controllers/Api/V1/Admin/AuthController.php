@@ -21,13 +21,17 @@ class AuthController extends Controller
             ->where('email', $validated['email'])
             ->first();
 
-        if (! $user || ! Hash::check($validated['password'], $user->password) || ! $user->is_admin) {
+        if (! $user || ! Hash::check($validated['password'], $user->password) || ! $user->isAdmin()) {
             throw ValidationException::withMessages([
                 'email' => 'Invalid admin credentials.',
             ]);
         }
 
-        $token = $adminApiTokenService->issueToken($user, (bool) ($validated['remember'] ?? false));
+        $token = $adminApiTokenService->issueToken(
+            $user,
+            (bool) ($validated['remember'] ?? false),
+            'admin-panel',
+        );
 
         return response()->json([
             'message' => 'Authenticated successfully.',
@@ -38,6 +42,7 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'role' => $user->portalRole(),
                 ],
             ],
         ]);
@@ -53,6 +58,7 @@ class AuthController extends Controller
                     'id' => $user?->id,
                     'name' => $user?->name,
                     'email' => $user?->email,
+                    'role' => $user?->portalRole(),
                 ],
             ],
         ]);

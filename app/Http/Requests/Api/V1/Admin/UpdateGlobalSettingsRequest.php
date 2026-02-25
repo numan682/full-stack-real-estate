@@ -29,6 +29,8 @@ class UpdateGlobalSettingsRequest extends FormRequest
             'header.announcement_link' => ['nullable', 'string', 'max:255'],
             'header.home_nav_label' => ['nullable', 'string', 'max:80'],
             'header.login_label' => ['nullable', 'string', 'max:80'],
+            'header.contact_label' => ['nullable', 'string', 'max:80'],
+            'header.contact_link' => ['nullable', 'string', 'max:255'],
             'header.add_listing_label' => ['nullable', 'string', 'max:80'],
             'header.add_listing_link' => ['nullable', 'string', 'max:255'],
             'footer.address' => ['nullable', 'string', 'max:255'],

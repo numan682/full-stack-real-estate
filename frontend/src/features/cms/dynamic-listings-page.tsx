@@ -358,6 +358,20 @@ export async function DynamicListingsPage({
   );
   const sidebarTitle = toStringValue(pageContent?.sidebar_title, "Advanced Search");
   const listingLabel = toStringValue(pageContent?.listing_label, "I'm looking to...");
+  const sortByLabel = toStringValue(pageContent?.sort_by_label, "Sort by:");
+  const keywordLabel = toStringValue(pageContent?.keyword_label, "Keyword");
+  const keywordPlaceholder = toStringValue(pageContent?.keyword_placeholder, "buy, home, loft, apartment");
+  const locationLabel = toStringValue(pageContent?.location_label, "Location");
+  const bedroomLabel = toStringValue(pageContent?.bedroom_label, "Bedroom");
+  const bathLabel = toStringValue(pageContent?.bath_label, "Bath");
+  const amenitiesTitle = toStringValue(pageContent?.amenities_title, "Amenities");
+  const searchButtonLabel = toStringValue(pageContent?.search_button_label, "Search");
+  const resetFilterLabel = toStringValue(pageContent?.reset_filter_label, "Reset Filter");
+  const allListingsLabel = toStringValue(pageContent?.all_listings_label, "All Listings");
+  const forSaleLabel = toStringValue(pageContent?.for_sale_label, "For Sale");
+  const forRentLabel = toStringValue(pageContent?.for_rent_label, "For Rent");
+  const featuredLabel = toStringValue(pageContent?.featured_label, "Featured");
+  const anyLabel = toStringValue(pageContent?.any_label, "Any");
   const perPage = toIntegerValue(pageContent?.per_page, 12);
   const featuredOnly = toBooleanValue(pageContent?.featured_only, false);
   const sort = toSortValue(pageContent?.sort, "newest");
@@ -415,7 +429,7 @@ export async function DynamicListingsPage({
                     </div>
                     <div className="d-flex align-items-center xs-mt-20">
                       <div className="short-filter d-flex align-items-center">
-                        <div className="fs-16 me-2">Short by:</div>
+                        <div className="fs-16 me-2">{sortByLabel}</div>
                         <select className="nice-select" defaultValue={sort}>
                           <option value="newest">Newest</option>
                           <option value="price_asc">Price Low</option>
@@ -481,22 +495,22 @@ export async function DynamicListingsPage({
                           <div className="input-box-one mb-35">
                             <div className="label">{listingLabel}</div>
                             <select className="nice-select fw-normal" defaultValue={featuredOnly ? "featured" : "all"}>
-                              <option value="all">All Listings</option>
-                              <option value="sale">For Sale</option>
-                              <option value="rent">For Rent</option>
-                              <option value="featured">Featured</option>
+                              <option value="all">{allListingsLabel}</option>
+                              <option value="sale">{forSaleLabel}</option>
+                              <option value="rent">{forRentLabel}</option>
+                              <option value="featured">{featuredLabel}</option>
                             </select>
                           </div>
                         </div>
                         <div className="col-12">
                           <div className="input-box-one mb-35">
-                            <div className="label">Keyword</div>
-                            <input type="text" placeholder="buy, home, loft, apartment" className="type-input" />
+                            <div className="label">{keywordLabel}</div>
+                            <input type="text" placeholder={keywordPlaceholder} className="type-input" />
                           </div>
                         </div>
                         <div className="col-12">
                           <div className="input-box-one mb-50">
-                            <div className="label">Location</div>
+                            <div className="label">{locationLabel}</div>
                             <select className="nice-select location fw-normal" defaultValue="all">
                               <option value="all">All Locations</option>
                               {cities.map((city) => (
@@ -507,9 +521,9 @@ export async function DynamicListingsPage({
                         </div>
                         <div className="col-sm-6">
                           <div className="input-box-one mb-40">
-                            <div className="label">Bedroom</div>
+                            <div className="label">{bedroomLabel}</div>
                             <select className="nice-select fw-normal" defaultValue="0">
-                              <option value="0">Any</option>
+                              <option value="0">{anyLabel}</option>
                               <option value="1">1+</option>
                               <option value="2">2+</option>
                               <option value="3">3+</option>
@@ -519,9 +533,9 @@ export async function DynamicListingsPage({
                         </div>
                         <div className="col-sm-6">
                           <div className="input-box-one mb-40">
-                            <div className="label">Bath</div>
+                            <div className="label">{bathLabel}</div>
                             <select className="nice-select fw-normal" defaultValue="0">
-                              <option value="0">Any</option>
+                              <option value="0">{anyLabel}</option>
                               <option value="1">1+</option>
                               <option value="2">2+</option>
                               <option value="3">3+</option>
@@ -530,7 +544,7 @@ export async function DynamicListingsPage({
                           </div>
                         </div>
                         <div className="col-12">
-                          <h6 className="block-title fw-bold mb-30">Amenities</h6>
+                          <h6 className="block-title fw-bold mb-30">{amenitiesTitle}</h6>
                           <ul className="style-none d-flex flex-wrap justify-content-between filter-input">
                             {amenities.map((amenity, amenityIndex) => (
                               <li key={amenity}>
@@ -543,14 +557,14 @@ export async function DynamicListingsPage({
                         <div className="col-12">
                           <button type="button" className="fw-500 text-uppercase tran3s apply-search w-100 mt-40 mb-25">
                             <i className="fa-light fa-magnifying-glass"></i>
-                            <span>Search</span>
+                            <span>{searchButtonLabel}</span>
                           </button>
                         </div>
                         <div className="col-12">
                           <div className="d-flex justify-content-between form-widget">
                             <a href="#" className="tran3s">
                               <i className="fa-regular fa-arrows-rotate"></i>
-                              <span>Reset Filter</span>
+                              <span>{resetFilterLabel}</span>
                             </a>
                             <a href="#" className="tran3s">
                               <i className="fa-regular fa-star"></i>

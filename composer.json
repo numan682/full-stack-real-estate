@@ -47,6 +47,19 @@
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ],
+        "setup:backend": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate --ansi",
+            "@php artisan migrate --seed --ansi"
+        ],
+        "setup:frontend": [
+            "Composer\\Config::disableProcessTimeout",
+            "npm --prefix frontend install"
+        ],
+        "setup": [
+            "@setup:backend",
+            "@setup:frontend"
+        ],
         "prod:up": [
             "@php scripts/prod.php up"
         ],
@@ -59,25 +72,114 @@
         "prod:status": [
             "@php scripts/prod.php status"
         ],
+        "prod:restart": [
+            "@php scripts/prod.php restart"
+        ],
+        "docker:up": [
+            "Composer\\Config::disableProcessTimeout",
+            "docker compose --env-file .env.production -f deploy/docker-compose.prod.yml up -d --build"
+        ],
+        "docker:up:backend": [
+            "Composer\\Config::disableProcessTimeout",
+            "docker compose --env-file .env.production -f deploy/docker-compose.prod.yml up -d --build mysql laravel-migrate laravel-app laravel-queue laravel-nginx"
+        ],
+        "docker:up:frontend": [
+            "Composer\\Config::disableProcessTimeout",
+            "docker compose --env-file .env.production -f deploy/docker-compose.prod.yml up -d --build next-frontend gateway"
+        ],
+        "docker:down": [
+            "docker compose --env-file .env.production -f deploy/docker-compose.prod.yml down"
+        ],
+        "docker:status": [
+            "docker compose --env-file .env.production -f deploy/docker-compose.prod.yml ps"
+        ],
+        "docker:restart": [
+            "docker compose --env-file .env.production -f deploy/docker-compose.prod.yml restart"
+        ],
+        "docker:logs": [
+            "Composer\\Config::disableProcessTimeout",
+            "docker compose --env-file .env.production -f deploy/docker-compose.prod.yml logs -f --tail=120"
+        ],
         "dev:clean": [
             "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-cleanup.ps1"
         ],
         "dev:api": [
+            "Composer\\Config::disableProcessTimeout",
             "@php artisan serve --host=127.0.0.1 --port=8000 --no-reload"
         ],
         "dev:queue": [
+            "Composer\\Config::disableProcessTimeout",
             "@php artisan queue:work --tries=1"
         ],
         "dev:frontend": [
+            "Composer\\Config::disableProcessTimeout",
             "npm --prefix frontend run dev -- --hostname 127.0.0.1 --port 3000"
         ],
         "dev:frontend:start": [
+            "Composer\\Config::disableProcessTimeout",
             "npm --prefix frontend run start -- --hostname 127.0.0.1 --port 3000"
+        ],
+        "serve:up": [
+            "@php scripts/dev-services.php up"
+        ],
+        "serve:down": [
+            "@php scripts/dev-services.php down"
+        ],
+        "serve:restart": [
+            "@php scripts/dev-services.php restart"
+        ],
+        "serve:status": [
+            "@php scripts/dev-services.php status"
+        ],
+        "serve:logs": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php scripts/dev-services.php logs"
+        ],
+        "serve:api:start": [
+            "@php scripts/dev-services.php start api"
+        ],
+        "serve:api:stop": [
+            "@php scripts/dev-services.php stop api"
+        ],
+        "serve:api:restart": [
+            "@php scripts/dev-services.php restart api"
+        ],
+        "serve:backend:start": [
+            "@php scripts/dev-services.php start backend"
+        ],
+        "serve:backend:stop": [
+            "@php scripts/dev-services.php stop backend"
+        ],
+        "serve:backend:restart": [
+            "@php scripts/dev-services.php restart backend"
+        ],
+        "serve:frontend:start": [
+            "@php scripts/dev-services.php start frontend"
+        ],
+        "serve:frontend:stop": [
+            "@php scripts/dev-services.php stop frontend"
+        ],
+        "serve:frontend:restart": [
+            "@php scripts/dev-services.php restart frontend"
+        ],
+        "serve:queue:start": [
+            "@php scripts/dev-services.php start queue"
+        ],
+        "serve:queue:stop": [
+            "@php scripts/dev-services.php stop queue"
+        ],
+        "serve:queue:restart": [
+            "@php scripts/dev-services.php restart queue"
         ],
         "demo:seed": [
             "@php artisan db:seed --class=RealEstateSeeder --force"
         ],
         "dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-cleanup.ps1",
+            "npx concurrently --kill-others-on-fail -c \"#93c5fd,#c4b5fd,#fb7185\" \"php artisan serve --host=127.0.0.1 --port=8000 --no-reload\" \"php artisan queue:work --tries=1\" \"npm --prefix frontend run dev -- --hostname 127.0.0.1 --port 3000\" --names=api,queue,next"
+        ],
+        "dev:full": [
             "Composer\\Config::disableProcessTimeout",
             "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-cleanup.ps1",
             "npx concurrently --kill-others-on-fail -c \"#93c5fd,#c4b5fd,#fb7185\" \"php artisan serve --host=127.0.0.1 --port=8000 --no-reload\" \"php artisan queue:work --tries=1\" \"npm --prefix frontend run dev -- --hostname 127.0.0.1 --port 3000\" --names=api,queue,next"

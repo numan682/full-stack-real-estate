@@ -2,6 +2,7 @@ export type AdminUser = {
   id: number;
   name: string;
   email: string;
+  role?: string;
 };
 
 export type AdminDashboardData = {
@@ -79,6 +80,8 @@ export type AdminCmsData = {
       announcement_link?: string;
       home_nav_label?: string;
       login_label?: string;
+      contact_label?: string;
+      contact_link?: string;
       add_listing_label?: string;
       add_listing_link?: string;
     };
@@ -90,9 +93,30 @@ export type AdminCmsData = {
   };
 };
 
+export type AdminAgent = {
+  id: number;
+  agency_id?: number | null;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  avatar_path?: string | null;
+  position?: string | null;
+  bio?: string | null;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  agency?: {
+    id: number;
+    name: string;
+  } | null;
+};
+
 export type AdminProperty = {
   id: number;
   uuid: string;
+  agent_id?: number | null;
   title: string;
   slug: string;
   description?: string | null;
@@ -126,6 +150,17 @@ export type AdminProperty = {
     sort_order: number;
     is_primary: boolean;
   }>;
+  agent?: {
+    id?: number | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    full_name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    avatar_path?: string | null;
+    position?: string | null;
+    is_active?: boolean;
+  } | null;
 };
 
 export type AdminBlogPost = {

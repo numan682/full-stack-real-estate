@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createBlogAction, deleteBlogAction } from "@/app/admin/(panel)/blogs/actions";
+import { deleteBlogAction } from "@/app/admin/(panel)/blogs/actions";
 import { fetchAdminBlogs } from "@/lib/admin/backend-client";
 
 type BlogsPageProps = {
@@ -52,83 +52,15 @@ export default async function AdminBlogsPage({ searchParams }: BlogsPageProps) {
           <h2 className="admin-title">Blogs</h2>
           <p className="admin-subtitle">Manage dynamic blog content and publishing workflow.</p>
         </div>
+        <div className="admin-actions">
+          <Link className="admin-btn" href="/admin/blogs/new">Add Blog Post</Link>
+        </div>
       </div>
 
       {status ? <div className="admin-flash">{status}</div> : null}
       {query.error ? <div className="admin-flash error">{query.error}</div> : null}
 
       <div className="admin-card">
-        <h3 style={{ marginTop: 0 }}>Create Blog Post</h3>
-        <form action={createBlogAction}>
-          <div className="admin-row">
-            <div className="admin-field" style={{ gridColumn: "span 6" }}>
-              <label htmlFor="title">Title</label>
-              <input id="title" name="title" required />
-            </div>
-
-            <div className="admin-field" style={{ gridColumn: "span 3" }}>
-              <label htmlFor="slug">Slug (Optional)</label>
-              <input id="slug" name="slug" />
-            </div>
-
-            <div className="admin-field" style={{ gridColumn: "span 3" }}>
-              <label htmlFor="status">Status</label>
-              <select id="status" name="status" defaultValue="draft">
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
-            </div>
-
-            <div className="admin-field" style={{ gridColumn: "span 4" }}>
-              <label htmlFor="author_name">Author</label>
-              <input id="author_name" name="author_name" />
-            </div>
-
-            <div className="admin-field" style={{ gridColumn: "span 4" }}>
-              <label htmlFor="published_at">Published At (ISO Optional)</label>
-              <input id="published_at" name="published_at" placeholder="2026-02-24T10:00:00Z" />
-            </div>
-
-            <div className="admin-field" style={{ gridColumn: "span 4" }}>
-              <label htmlFor="featured_image_path">Featured Image Path</label>
-              <input id="featured_image_path" name="featured_image_path" placeholder="/images/blog/blog_01.jpg" />
-            </div>
-
-            <div className="admin-field" style={{ gridColumn: "span 6" }}>
-              <label htmlFor="featured_image_alt">Featured Image Alt</label>
-              <input id="featured_image_alt" name="featured_image_alt" />
-            </div>
-
-            <div className="admin-field" style={{ gridColumn: "span 6" }}>
-              <label htmlFor="excerpt">Excerpt</label>
-              <textarea id="excerpt" name="excerpt" />
-            </div>
-
-            <div className="admin-field" style={{ gridColumn: "span 12" }}>
-              <label htmlFor="content">Content</label>
-              <textarea id="content" name="content" />
-            </div>
-
-            <div className="admin-field" style={{ gridColumn: "span 12" }}>
-              <label htmlFor="seo_payload_json">SEO Payload (JSON Object)</label>
-              <textarea id="seo_payload_json" name="seo_payload_json" defaultValue={"{}"} />
-            </div>
-
-            <div className="admin-field" style={{ gridColumn: "span 12" }}>
-              <label htmlFor="is_featured">
-                <input id="is_featured" name="is_featured" type="checkbox" /> Mark as featured
-              </label>
-            </div>
-          </div>
-
-          <div className="admin-actions" style={{ marginTop: 10 }}>
-            <button className="admin-btn" type="submit">Create Blog Post</button>
-          </div>
-        </form>
-      </div>
-
-      <div className="admin-card" style={{ marginTop: 14 }}>
         <h3 style={{ marginTop: 0 }}>Blog Posts</h3>
         {!response.ok ? (
           <div className="admin-flash error">{response.message ?? "Failed to load blog posts."}</div>

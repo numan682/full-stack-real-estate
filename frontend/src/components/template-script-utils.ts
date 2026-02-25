@@ -1,3 +1,3 @@
 export function dedupeScripts(scripts: string[]): string[] {
-  return scripts.filter((script, index) => scripts.indexOf(script) === index);
+  return Array.from(new Set(scripts.filter((script) => script.trim() !== "")));
 }
